@@ -8,7 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import * as mqtt from 'mqtt';
 import { v4 as uuidv4 } from 'uuid';
-import { DeviceRepository } from '../auth/device.repository';
+import { DeviceRepository } from '../auth/repositories/device.repository';
 
 @Injectable()
 export class MqttService implements OnModuleInit, OnModuleDestroy {

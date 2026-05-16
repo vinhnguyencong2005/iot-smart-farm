@@ -7,13 +7,11 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { OnEvent } from '@nestjs/event-emitter';
 import * as amqp from 'amqplib';
-import { type SensorLogDocument } from './schemas/sensor-log.schema';
+import { type SensorLogDocument } from '../environment/schemas/sensor-log.schema';
 
 @Injectable()
-export class TelemetryPublisherService
-  implements OnModuleInit, OnModuleDestroy
-{
-  private readonly logger = new Logger(TelemetryPublisherService.name);
+export class SensorPublisherService implements OnModuleInit, OnModuleDestroy {
+  private readonly logger = new Logger(SensorPublisherService.name);
 
   private connection!: amqp.ChannelModel;
   private channel!: amqp.Channel;

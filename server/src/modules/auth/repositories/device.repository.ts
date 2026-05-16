@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Device, DeviceDocument } from './schemas/device.schema';
+import { Device, DeviceDocument } from '../schemas/device.schema';
 
 @Injectable()
 export class DeviceRepository {
