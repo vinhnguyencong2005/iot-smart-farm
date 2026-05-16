@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { DeviceStatus } from '../../../common/enums/smart-farm.enums';
+import { DeviceStatus } from '../enums/device.enums';
 import { HydratedDocument, Schema as MongooseSchema, Types } from 'mongoose';
 
 export type DeviceDocument = HydratedDocument<Device>;

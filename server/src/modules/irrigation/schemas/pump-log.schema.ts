@@ -2,7 +2,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Schema as MongooseSchema } from 'mongoose';
 import {
   TriggerSource,
-  PumpActionStatus,
+  PumpStatus,
 } from '../../../common/enums/smart-farm.enums';
 
 export type PumpLogDocument = HydratedDocument<PumpLog>;
@@ -25,7 +25,7 @@ export class PumpLog {
   @Prop({ required: true, enum: TriggerSource })
   trigger_source!: string;
 
-  @Prop({ required: true, enum: PumpActionStatus })
+  @Prop({ required: true, enum: PumpStatus })
   status!: string;
 
   @Prop({ required: true })

@@ -21,7 +21,6 @@ export class MqttService implements OnModuleInit, OnModuleDestroy {
   constructor(
     private configService: ConfigService,
     private eventEmitter: EventEmitter2,
-    // 1. Inject the Device Repository here!
     private deviceRepo: DeviceRepository,
   ) {}
 

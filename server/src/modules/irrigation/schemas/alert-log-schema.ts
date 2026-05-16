@@ -1,10 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Schema as MongooseSchema } from 'mongoose';
-import {
-  SensorType,
-  AlertStatus,
-  AlertType,
-} from '../../../common/enums/smart-farm.enums';
+import { AlertStatus, AlertType } from '../enums/alert.enums';
+import { SensorType } from '../enums/sensor.enums';
 
 export type AlertLogDocument = HydratedDocument<AlertLog>;
 

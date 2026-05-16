@@ -16,7 +16,7 @@ export class DataCleanerService {
 
     const traceId: string =
       (rawPayload.traceId as string) || 'unknown-trace-id';
-    this.logger.debug(`Processing traceId: ${traceId}`);
+    this.logger.debug(`[${traceId}] Cleaning environment data.`);
 
     const environmentDto = plainToInstance(EnvironmentDto, rawPayload);
     const error = await validate(environmentDto);
