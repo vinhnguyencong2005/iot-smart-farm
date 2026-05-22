@@ -20,11 +20,18 @@ import { MqttModule } from './modules/mqtt/mqtt.module';
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        uri:
-          configService.get<string>('MONGODB_URI') ||
-          'mongodb://localhost:27017/smart-irrigation',
-      }),
+      useFactory: (configService: ConfigService) => {
+        const port = configService.get<string>('MONGODB_PORT');
+        const user = configService.get<string>('MONGODB_USER');
+        const pass = configService.get<string>('MONGODB_PASS');
+        const dbName = configService.get<string>('MONGODB_DB_NAME');
+        const authSource = configService.get<string>('MONGODB_AUTH_SOURCE');
+
+        const uri = `mongodb://${user}:${pass}@localhost:${port}/${dbName}?authSource=${authSource}`;
+        return {
+          uri,
+        };
+      },
     }),
     EventEmitterModule.forRoot({
       wildcard: true,

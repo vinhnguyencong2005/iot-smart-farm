@@ -64,6 +64,13 @@ export class EnvironmentRepository {
     deviceId: string,
   ): Promise<SensorConfigDocument | null> {
     try {
+      this.logger.log(`[${deviceId}] Fetching sensor config.`);
+
+      if (!Types.ObjectId.isValid(deviceId)) {
+        this.logger.warn(`[${deviceId}] Invalid ObjectId format provided.`);
+        return null;
+      }
+
       return await this.sensorConfigModel
         .findOne({ device_id: new Types.ObjectId(deviceId) })
         .exec();
