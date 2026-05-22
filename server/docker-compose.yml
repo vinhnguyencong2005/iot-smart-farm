@@ -2,7 +2,7 @@ version: '3.8'
 services:
   rabbitmq:
     image: rabbitmq:3-management
-    container_name: fernlidae-rabbitmq
+    container_name: iot-smart-farm-rabbitmq
     ports:
       - "5672:5672"   # Standard AMQP (NestJS uses this to publish)
       - "15672:15672" # Management UI (Browser dashboard)

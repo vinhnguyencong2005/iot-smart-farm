@@ -6,9 +6,10 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
-import { TelemetryModule } from './modules/telemetry/telemetry.module';
-import { AuthModule } from './modules/auth/auth.module';
-import { ControlModule } from './modules/control/control.module';
+import { HardwareModule } from './modules/hardware/hardware.module';
+import { EnvironmentModule } from './modules/environment/environment.module';
+import { MonitorModule } from './modules/monitor/monitor.module';
+import { IrrigationModule } from './modules/irrigation/irrigation.module';
 import { MqttModule } from './modules/mqtt/mqtt.module';
 
 @Module({
@@ -30,9 +31,10 @@ import { MqttModule } from './modules/mqtt/mqtt.module';
       delimiter: '.',
       maxListeners: 10,
     }),
-    AuthModule,
-    TelemetryModule,
-    ControlModule,
+    HardwareModule,
+    EnvironmentModule,
+    MonitorModule,
+    IrrigationModule,
     MqttModule,
   ],
   controllers: [AppController],
