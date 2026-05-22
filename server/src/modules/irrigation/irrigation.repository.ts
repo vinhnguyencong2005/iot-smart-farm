@@ -46,10 +46,6 @@ export class IrrigationRepository {
     return newLog.save();
   }
 
-  /**
-   * (Optional) Fetch pump config.
-   * You'll use this later if you move the cooldown/duration settings to the DB.
-   */
   async getPumpConfig(deviceId: string): Promise<PumpConfigDocument | null> {
     return this.pumpConfigModel
       .findOne({ device_id: new Types.ObjectId(deviceId) })

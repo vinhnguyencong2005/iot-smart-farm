@@ -41,7 +41,7 @@ export class SensorPublisherService implements OnModuleInit, OnModuleDestroy {
       return;
     }
 
-    // 2. Construct the connection string dynamically
+    // Construct the connection string dynamically
     const rabbitUrl = `amqp://${user}:${pass}@${host}:${port}`;
 
     try {
@@ -60,9 +60,8 @@ export class SensorPublisherService implements OnModuleInit, OnModuleDestroy {
 
   /**
    * THE EVENT LISTENER: Catch the data saved by the TelemetryRepository.
-   * (Restoring this fixes the unused OnEvent and SensorLogDocument errors!)
    */
-  @OnEvent('CLEAN_TELEMETRY_SAVED')
+  @OnEvent('CLEAN_ENVIRONMENT_DATA_SAVED')
   handleNewTelemetry(savedLog: SensorLogDocument) {
     if (!this.channel) return;
 
