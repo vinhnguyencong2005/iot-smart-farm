@@ -26,7 +26,7 @@ export class CommandService {
       `[${traceId}] Irrigation requested for device ${device_id} via ${source}`,
     );
 
-    // 1. Fetch from Cache or Database securely
+    // Fetch from Cache or Database securely
     let cooldownMs = this.pumpCooldowns.get(device_id);
 
     if (!cooldownMs) {
@@ -45,7 +45,7 @@ export class CommandService {
       this.pumpCooldowns.set(device_id, cooldownMs);
     }
 
-    // 2. HARDWARE SAFETY: Cooldown Check
+    // HARDWARE SAFETY: Cooldown Check
     const lastPumpLog = await this.irrigationRepo.getLastPumpAction(device_id);
 
     if (lastPumpLog) {
@@ -67,7 +67,7 @@ export class CommandService {
     }
 
     try {
-      // 3. Log the action to MongoDB (Audit Trail)
+      // Log the action to MongoDB (Audit Trail)
       await this.irrigationRepo.logPumpAction({
         device_id,
         traceId,
@@ -77,10 +77,10 @@ export class CommandService {
         timestamp: new Date(),
       });
 
-      // 4. Construct the payload for the ESP32 (e.g., "ON_120")
+      // Construct the payload for the ESP32 (e.g., "ON_120")
       const physicalCommand = `ON_${duration}`;
 
-      // 5. Send it to the MQTT Service to be broadcasted over the internet
+      // Send it to the MQTT Service to be broadcasted over the internet
       this.eventEmitter.emit('PUMP_CMD_DISPATCHED', {
         traceId,
         command: physicalCommand,

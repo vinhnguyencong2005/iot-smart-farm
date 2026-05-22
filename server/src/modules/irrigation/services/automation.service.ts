@@ -28,7 +28,7 @@ export class AutomationService {
       `[${traceId}] Evaluating irrigation needs for device ${device_id}`,
     );
 
-    // 1. Fetch from Cache or Database
+    // Fetch from Cache or Database
     if (!this.pumpConfigurations.has(device_id)) {
       const config = await this.irrigationRepository.getPumpConfig(device_id);
 
@@ -44,7 +44,7 @@ export class AutomationService {
 
     const config = this.pumpConfigurations.get(device_id)!;
 
-    // 2. Master kill-switch check
+    // Master kill-switch check
     if (!config.enabled || !config.triggers || config.triggers.length === 0) {
       return;
     }
@@ -52,7 +52,7 @@ export class AutomationService {
     let shouldWater = false;
     let triggerReason = '';
 
-    // 3. Dynamically evaluate every rule defined in the PumpConfig schema
+    // Dynamically evaluate every rule defined in the PumpConfig schema
     for (const trigger of config.triggers) {
       // Access the sensor value dynamically using the enum (e.g., cleanedData['soil_moisture'])
       const currentValue = cleanedData[trigger.type as keyof EnvironmentDto];
@@ -79,7 +79,7 @@ export class AutomationService {
       }
     }
 
-    // 4. Dispatch the command if a rule matched
+    // Dispatch the command if a rule matched
     if (shouldWater) {
       this.logger.log(`[${traceId}] Automation triggered: ${triggerReason}`);
 

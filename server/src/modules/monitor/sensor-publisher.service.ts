@@ -30,7 +30,7 @@ export class SensorPublisherService implements OnModuleInit, OnModuleDestroy {
   }
 
   private async connectToRabbitMQ() {
-    // 1. Pull the separated credentials
+    // Pull the separated credentials
     const user = this.configService.get<string>('RABBITMQ_USER');
     const pass = this.configService.get<string>('RABBITMQ_PASS');
     const host = this.configService.get<string>('RABBITMQ_HOST');

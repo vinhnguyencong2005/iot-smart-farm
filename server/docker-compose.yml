@@ -14,3 +14,19 @@ services:
     command: >
       bash -c "rabbitmq-plugins enable --offline rabbitmq_web_stomp &&
       rabbitmq-server"
+
+  mongodb:
+    image: mongo:6
+    container_name: iot-smart-farm-mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_DATABASE: iot_smart_farm_db
+    volumes:
+      # This ensures data isn't deleted when the container stops!
+      - mongodb_data:/data/db
+
+volumes:
+  mongodb_data:

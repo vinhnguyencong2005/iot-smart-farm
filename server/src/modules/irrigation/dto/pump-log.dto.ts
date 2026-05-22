@@ -5,6 +5,6 @@ export interface PumpLogDto {
   device_id: string;
   duration: number;
   source: TriggerSource;
-  status: PumpStatus;
+  status?: PumpStatus;
   timestamp: Date;
 }
