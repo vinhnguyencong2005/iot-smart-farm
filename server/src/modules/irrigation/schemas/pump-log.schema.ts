@@ -1,9 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument, Schema as MongooseSchema } from 'mongoose';
-import {
-  TriggerSource,
-  PumpStatus,
-} from '../../../common/enums/smart-farm.enums';
+import { HydratedDocument, Types } from 'mongoose';
+import { TriggerSource, PumpStatus } from '../enums/pump.enums';
 
 export type PumpLogDocument = HydratedDocument<PumpLog>;
 
@@ -12,15 +9,8 @@ export class PumpLog {
   @Prop({ required: true, index: true })
   traceId!: string;
 
-  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Device', required: true })
-  device_id!: MongooseSchema.Types.ObjectId;
-
-  @Prop({
-    type: MongooseSchema.Types.ObjectId,
-    ref: 'SensorLog',
-    required: false,
-  })
-  sensor_log_id?: MongooseSchema.Types.ObjectId; // Optional, as MANUAL triggers won't have this
+  @Prop({ type: Types.ObjectId, ref: 'Device', required: true })
+  device_id!: Types.ObjectId;
 
   @Prop({ required: true, enum: TriggerSource })
   trigger_source!: string;

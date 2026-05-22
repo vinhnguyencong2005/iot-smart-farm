@@ -1,64 +1,118 @@
-import { Injectable } from '@nestjs/common';
-import { Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { EnvironmentDto } from '../../environment/dto/environment.dto';
-import { EnvironmentRepository } from '../../environment/environment.repository';
-import { SensorConfigDocument } from '../../environment/schemas/sensor-config.schema';
+import { IrrigationRepository } from '../irrigation.repository';
+import { PumpConfigDocument } from '../schemas/pump-config.schema';
+import { CommandService } from './command.service';
+import { TriggerSource, PumpCondition } from '../enums/pump.enums';
+import { type PumpLogDto } from '../dto/pump-log.dto';
 
 @Injectable()
 export class AutomationService {
   private readonly logger = new Logger(AutomationService.name);
 
-  private deviceConfigurations: Map<string, SensorConfigDocument> = new Map();
+  // Cache updated to hold the PumpConfig instead of SensorConfig
+  private pumpConfigurations: Map<string, PumpConfigDocument> = new Map();
 
   constructor(
     private readonly eventEmitter: EventEmitter2,
-    private readonly environmentRepository: EnvironmentRepository,
+    private readonly irrigationRepository: IrrigationRepository,
+    private readonly commandService: CommandService,
   ) {}
 
   @OnEvent('CLEAN_ENVIRONMENT_DATA_SAVED')
   async evaluateIrrigationNeeds(cleanedData: EnvironmentDto) {
-    const { device_id, soil_moisture, traceId } = cleanedData;
+    const { device_id, traceId } = cleanedData;
 
     this.logger.debug(
       `[${traceId}] Evaluating irrigation needs for device ${device_id}`,
     );
 
-    if (!this.deviceConfigurations.has(device_id)) {
-      const config =
-        await this.environmentRepository.getSensorConfig(device_id);
+    // 1. Fetch from Cache or Database
+    if (!this.pumpConfigurations.has(device_id)) {
+      const config = await this.irrigationRepository.getPumpConfig(device_id);
 
       if (!config) {
         this.logger.warn(
-          `[${traceId}] No sensor config found for device ${device_id}. Skipping automation.`,
+          `[${traceId}] No pump config found for device ${device_id}. Skipping automation.`,
         );
         return;
       }
 
-      this.deviceConfigurations.set(device_id, config);
+      this.pumpConfigurations.set(device_id, config);
     }
 
-    const config = this.deviceConfigurations.get(device_id)!;
+    const config = this.pumpConfigurations.get(device_id)!;
 
-    if (
-      config.soil_moisture.enabled &&
-      soil_moisture < config.soil_moisture.min
-    ) {
-      this.logger.log(
-        `[${traceId}] Soil moisture (${soil_moisture}) dropped below minimum (${config.soil_moisture.min}). Emitting IRRIGATION_NEEDED event.`,
-      );
+    // 2. Master kill-switch check
+    if (!config.enabled || !config.triggers || config.triggers.length === 0) {
+      return;
+    }
+
+    let shouldWater = false;
+    let triggerReason = '';
+
+    // 3. Dynamically evaluate every rule defined in the PumpConfig schema
+    for (const trigger of config.triggers) {
+      // Access the sensor value dynamically using the enum (e.g., cleanedData['soil_moisture'])
+      const currentValue = cleanedData[trigger.type as keyof EnvironmentDto];
+
+      // Type guard to ensure we are comparing numbers
+      if (typeof currentValue !== 'number') continue;
+
+      if (
+        trigger.condition === PumpCondition.LESS_THAN &&
+        currentValue < trigger.value
+      ) {
+        shouldWater = true;
+        triggerReason = `${trigger.type} (${currentValue}) is LESS THAN ${trigger.value}`;
+        break; // One triggered rule is enough to turn on the pump
+      }
+
+      if (
+        trigger.condition === PumpCondition.GREATER_THAN &&
+        currentValue > trigger.value
+      ) {
+        shouldWater = true;
+        triggerReason = `${trigger.type} (${currentValue}) is GREATER THAN ${trigger.value}`;
+        break;
+      }
+    }
+
+    // 4. Dispatch the command if a rule matched
+    if (shouldWater) {
+      this.logger.log(`[${traceId}] Automation triggered: ${triggerReason}`);
 
       this.eventEmitter.emit('IRRIGATION_NEEDED', {
         device_id,
         traceId,
-        soil_moisture, // Passed so the command service knows WHY it fired
+        duration: config.duration, // Grab the duration directly from the schema!
       });
     }
   }
 
-  @OnEvent('SENSOR_CONFIG_UPDATED')
+  // Clear cache if the user updates their pump rules in the UI
+  @OnEvent('PUMP_CONFIG_UPDATED')
   clearCache(deviceId: string) {
-    this.logger.log(`Clearing cached configuration for device: ${deviceId}`);
-    this.deviceConfigurations.delete(deviceId);
+    this.logger.log(
+      `Clearing cached pump configuration for device: ${deviceId}`,
+    );
+    this.pumpConfigurations.delete(deviceId);
+  }
+
+  @OnEvent('IRRIGATION_NEEDED')
+  async executeAutomation(payload: PumpLogDto) {
+    try {
+      await this.commandService.dispatchPumpCommand({
+        device_id: payload.device_id,
+        duration: payload.duration,
+        source: TriggerSource.ENV,
+        traceId: payload.traceId,
+      } as PumpLogDto);
+    } catch (error: any) {
+      this.logger.warn(
+        `[${payload.traceId}] Automated irrigation skipped: ${error}`,
+      );
+    }
   }
 }

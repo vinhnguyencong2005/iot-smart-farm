@@ -1,9 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument, Schema as MongooseSchema } from 'mongoose';
-import {
-  SensorType,
-  PumpCondition,
-} from '../../../common/enums/smart-farm.enums';
+import { HydratedDocument, Types } from 'mongoose';
+import { PumpCondition } from '../enums/pump.enums';
+import { SensorType } from '../enums/sensor.enums';
 
 export type PumpConfigDocument = HydratedDocument<PumpConfig>;
 
@@ -13,7 +11,7 @@ class PumpTrigger {
   type!: string;
 
   @Prop({ required: true, enum: PumpCondition })
-  condition!: string;
+  condition!: PumpCondition;
 
   @Prop({ required: true })
   value!: number;
@@ -22,12 +20,12 @@ class PumpTrigger {
 @Schema({ timestamps: true })
 export class PumpConfig {
   @Prop({
-    type: MongooseSchema.Types.ObjectId,
+    type: Types.ObjectId,
     ref: 'Device',
     required: true,
     index: true,
   })
-  device_id!: MongooseSchema.Types.ObjectId;
+  device_id!: Types.ObjectId;
 
   @Prop({ required: true })
   enabled!: boolean;
