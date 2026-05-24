@@ -1,20 +1,11 @@
 import { Module } from '@nestjs/common';
-import { IrrigationController } from './irrigation.controller';
-import { AutomationService } from './services/automation.service';
-import { CommandService } from './services/command.service';
-import { IrrigationRepository } from './irrigation.repository';
-import { MongooseModule } from '@nestjs/mongoose';
-import { PumpLog, PumpLogSchema } from './schemas/pump-log.schema';
-import { PumpConfig, PumpConfigSchema } from './schemas/pump-config.schema';
+import { IrrigationController } from './controllers/irrigation.controller';
+import { IrrigationService } from './services/irrigation.service';
+import { DeviceModule } from '../device/device.module'; // Required for DeviceRepository
 
 @Module({
-  providers: [AutomationService, IrrigationRepository, CommandService],
+  imports: [DeviceModule],
   controllers: [IrrigationController],
-  imports: [
-    MongooseModule.forFeature([
-      { name: PumpLog.name, schema: PumpLogSchema },
-      { name: PumpConfig.name, schema: PumpConfigSchema },
-    ]),
-  ],
+  providers: [IrrigationService],
 })
 export class IrrigationModule {}

@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
-import { SensorPublisherService } from './sensor-publisher.service';
+import { MonitorController } from './controllers/monitor.controller';
 
 @Module({
-  providers: [SensorPublisherService],
+  controllers: [MonitorController]
 })
 export class MonitorModule {}
