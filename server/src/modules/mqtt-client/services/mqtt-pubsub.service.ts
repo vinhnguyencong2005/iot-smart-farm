@@ -23,8 +23,8 @@ export class MqttPubSubService implements OnModuleInit {
     const client = this.mqttConnection.getClient();
 
     const username = this.configService.get<string>('ADAFRUIT_AIO_USERNAME');
-    this.sensorTopic = `${username}/feeds/sensors`;
-    this.pumpTopic = `${username}/feeds/command`;
+    this.sensorTopic = `${username}/feeds/farm.sensors`;
+    this.pumpTopic = `${username}/feeds/farm.commands`;
 
     // Set up subscriptions once the client connects
     client.on('connect', () => {
