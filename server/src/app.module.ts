@@ -13,6 +13,7 @@ import { IrrigationModule } from './modules/irrigation/irrigation.module';
 import { AnalyticModule } from './modules/analytic/analytic.module';
 import { MonitorModule } from './modules/monitor/monitor.module';
 import { GlobalStateModule } from './modules/global-state/global-state.module';
+import { InitializerModule } from './modules/initializer/initializer.module';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { GlobalStateModule } from './modules/global-state/global-state.module';
     AnalyticModule,
     MonitorModule,
     GlobalStateModule,
+    InitializerModule,
   ],
   controllers: [AppController],
   providers: [AppService],

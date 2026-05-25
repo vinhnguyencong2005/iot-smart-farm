@@ -1,12 +1,11 @@
 import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
 
-import { Device, DeviceDocument } from '../../device/schemas/device.schema';
 import { SensorType } from '../../device/enums/config.enums';
 import { SensorConfig } from '../../device/schemas/sensor-config.schema';
 import { PumpConfig } from '../../device/schemas/pump-config.schema';
+
+import { GlobalStateRepository } from '../repositories/global-state.repository';
 
 import {
   UpdateSensorConfigEvent,
@@ -21,14 +20,19 @@ export class GlobalStateService implements OnModuleInit {
 
   private readonly logger = new Logger(GlobalStateService.name);
 
-  constructor(
-    @InjectModel(Device.name)
-    private readonly deviceModel: Model<DeviceDocument>,
-  ) {}
+  constructor(private readonly globalStateRepo: GlobalStateRepository) {}
 
   async onModuleInit() {
+    await this.refreshCache();
+  }
+
+  async refreshCache() {
     this.logger.log('Bootstrapping Global State from MongoDB...');
-    const devices = await this.deviceModel.find({}).lean().exec();
+    const devices = await this.globalStateRepo.getAllDevices();
+
+    this.macToIdMap.clear();
+    this.deviceSensorsMap.clear();
+    this.devicePumpsMap.clear();
 
     for (const device of devices) {
       const deviceId = device._id.toString();
