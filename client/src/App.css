@@ -12,24 +12,6 @@ h1 {
   margin: 0;
 }
 
-.login-button {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 18px;
-  border: 1.5px solid #ccc;
-  border-radius: 24px;
-  background: white;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  margin-right: 20px;
-}
-
-.login-button:hover {
-  background: #f5f5f5;
-}
-
 .pair-section {
   display: flex;
   align-items: center;
@@ -64,6 +46,18 @@ h1 {
 
 .pair-button:hover {
   background: #d0d0d0;
+}
+
+.pair-error {
+  margin: 8px 0 0 3%;
+  color: #c0392b;
+  font-size: 13px;
+}
+
+.pair-success {
+  margin: 8px 0 0 3%;
+  color: #27ae60;
+  font-size: 13px;
 }
 
 .data-display {

@@ -1,29 +1,41 @@
-# React + Vite
+# IoT Smart Farm - Client
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Prerequisites
 
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- Node.js v18+
+- Docker (required to run MongoDB and RabbitMQ for the server)
+- The **server** must be running before starting the client — see [`server/README.md`](../server/README.md)
 
 ## Setup
 
 ```bash
-$ npm install
-$ npm install react-router-dom
+npm install
 ```
 
-## Run
+## Scripts
 
-```bash
-$ npm run dev
-```
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start the development server at `http://localhost:5173` |
+| `npm run build` | Build for production (output in `dist/`) |
+| `npm run preview` | Preview the production build locally |
+
+## Usage
+
+### 1. Pair a device
+Enter the MAC address of your ESP32 board in the input field (format: `AA:BB:CC:DD:EE:FF`) and click **Pair**.
+
+A success message will appear once the device is found.
+
+### 2. View sensor data
+After pairing, the dashboard displays live readings pushed from the device:
+
+| Card | Sensor |
+|------|--------|
+| Temperature | Ambient temperature (°C) |
+| Light intensity | Light level (lux) |
+| Soil moisture | Soil moisture (%) |
+| Humidity | Air humidity (%) |
+
+### 3. Trigger watering
+Click the **Watering** button to manually activate the pump. The button is disabled until a device is paired.
