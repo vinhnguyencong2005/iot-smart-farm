@@ -10,7 +10,7 @@ function Home() {
   const [macInput, setMacInput] = useState('');
   const { deviceId, readings, pairError, pair, water, isWatering } = useFarmDevice();
   const [currentTime, setCurrentTime] = useState(new Date());
-  
+
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
@@ -31,20 +31,20 @@ function Home() {
 
   return (
     <>
-      {/* Giữ giao diện Header đẹp và có đồng hồ của Phú */}
       <div className="header">
         <div className="header-left-block">
           <h1 className="logo-text">Logo here</h1>
           <div className="system-status-bar">
             <span className="dashboard-title">SMART FARM IOT SYSTEM DASHBOARD</span>
-            <div className="time-display">
-              {formatTime(currentTime)}
+            <div className="time-display"> {formatTime(currentTime)}
             </div>
           </div>
         </div>
+        <button className="logout-btn" onClick={() => alert('Clicked log out')}>
+          Log out
+        </button>
       </div>
 
-      {/* Giữ phần kết nối bằng MAC Address và báo lỗi/thành công của Vinh */}
       <div className="home-container">
         <div className="pair-section">
           <input
@@ -63,7 +63,6 @@ function Home() {
         {pairError && <p className="pair-error">{pairError}</p>}
         {deviceId && <p className="pair-success">Paired · {deviceId}</p>}
 
-        {/* Đổ dữ liệu thật từ cảm biến của Vinh vào giao diện Card */}
         <div>
           <DataDisplay data={[
             { properties: { title: 'Temperature', icon: heatIcon, unit: '°C' }, value: readings?.temp || 0 },
@@ -73,7 +72,6 @@ function Home() {
           ]} />
         </div>
 
-        {/* Nút điều khiển tưới cây bằng logic thật của Vinh */}
         <div className="controls">
           <button
             className={`watering-button${isWatering ? ' watering-button--active' : ''}`}

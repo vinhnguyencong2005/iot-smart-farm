@@ -11,6 +11,20 @@
   flex-direction: column;
 }
 
+.logout-btn {
+  background-color: #ef4444;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 8px;
+}
+
+.logout-btn:hover {
+  background-color: #fca5a5;
+}
+
 /* thanh tiêu đề và tgian */
 .system-status-bar {
   display: flex;
