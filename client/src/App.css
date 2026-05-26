@@ -116,6 +116,18 @@ h1 {
   background: #d0d0d0;
 }
 
+.pair-error {
+  margin: 8px 0 0 3%;
+  color: #c0392b;
+  font-size: 13px;
+}
+
+.pair-success {
+  margin: 8px 0 0 3%;
+  color: #27ae60;
+  font-size: 13px;
+}
+
 .data-display {
   display: grid;
   grid-template-columns: 1fr 1fr;
