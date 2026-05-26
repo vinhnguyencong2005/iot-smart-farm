@@ -1,16 +1,66 @@
 .header {
   display: flex;
-  padding: 20px 0 0 0;
   justify-content: space-between;
+  align-items: flex-start;
+  padding: 16px 24px;
+  background-color: #ffffff;
+}
+
+.header-left-block {
+  display: flex;
+  flex-direction: column;
+}
+
+/* thanh tiêu đề và tgian */
+.system-status-bar {
+  display: flex;
+  flex-direction: row;
   align-items: center;
+  gap: 250px; 
+  margin-top:20px;
+  margin-left: 20px;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom:10px;
+}
+
+.dashboard-title {
+  font-family: 'Inter', sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  color: #4a5568;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 h1 {
   padding: 0 0 0 20px;
-  font-size: 24px;
+  font-size: 28px;
   font-weight: 700;
   margin: 0;
 }
+
+.time-display {
+  font-family: 'Courier New', Courier, monospace; 
+  font-size: 24px;
+  font-weight: 600;
+  color: #4a5568;
+  background: #edf2f7;
+  padding: 6px 12px;
+  border-radius: 6px;
+}
+
+.home-container {
+  display: flex;
+  flex-direction: column; /* xếp theo hàng dọc */
+  align-items: center;    /* căn giữa theo chiều ngang */
+  justify-content: center;/* căn giữa theo chiều dọc */
+  min-height: 100vh;      /* Chiều cao bằng 100% màn hình hiển thị */
+  width: 100%;
+  box-sizing: border-box;
+  padding: 20px;
+  gap: 24px;              /* gap voi cai tren */
+}
+
 
 .login-button {
   display: flex;
