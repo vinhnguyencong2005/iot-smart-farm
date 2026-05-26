@@ -1,0 +1,31 @@
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: iot-smart-farm-rabbitmq
+    ports:
+      - "5672:5672"   # Standard AMQP (NestJS uses this to publish)
+      - "15672:15672" # Management UI (Browser dashboard)
+      - "15674:15674" # Web STOMP (React uses this to subscribe)
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: password
+    # This command turns on the STOMP WebSockets plugin before booting
+    command: >
+      bash -c "rabbitmq-plugins enable --offline rabbitmq_web_stomp &&
+      rabbitmq-server"
+
+  mongodb:
+    image: mongo:6
+    container_name: iot-smart-farm-mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_DATABASE: iot_smart_farm_db
+    volumes:
+      # This ensures data isn't deleted when the container stops!
+      - mongodb_data:/data/db
+
+volumes:
+  mongodb_data:
