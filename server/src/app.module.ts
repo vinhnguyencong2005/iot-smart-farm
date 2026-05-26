@@ -23,19 +23,16 @@ import { InitializerModule } from './modules/initializer/initializer.module';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
-        const port = configService.get<string>('MONGODB_PORT');
-        const host = configService.get<string>('MONGODB_HOST');
-        const username = configService.get<string>('MONGODB_USERNAME');
-        const password = configService.get<string>('MONGODB_PASSWORD');
-        const dbName = configService.get<string>('MONGODB_DB_NAME');
-        const authSource = configService.get<string>('MONGODB_AUTH_SOURCE');
+      const port = configService.get<string>('MONGODB_PORT');
+      const host = configService.get<string>('MONGODB_HOST');
+      const dbName = configService.get<string>('MONGODB_NAME');
 
-        const uri = `mongodb://${username}:${password}@${host}:${port}/${dbName}?authSource=${authSource}`;
+      const uri = `mongodb://${host}:${port}/${dbName}`;
 
-        return {
-          uri,
-        };
-      },
+      return {
+        uri,
+      };
+    },
     }),
 
     EventEmitterModule.forRoot({

@@ -1,0 +1,186 @@
+import { Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+
+import { SensorLog, SensorLogDocument } from '../../monitor/schemas/sensor-log.schema';
+import { PumpLog, PumpLogDocument } from '../../monitor/schemas/pump-log.schema';
+import { GetTelemetryTrendDto, TimeResolution } from '../dto/get-telemetry-trend.dto';
+import { GetPumpStatsDto } from '../dto/get-pump-stats.dto'; 
+
+export class AnalyticService {
+  constructor(
+    @InjectModel(SensorLog.name) private sensorLogModel: Model<SensorLogDocument>,
+    @InjectModel(PumpLog.name) private pumpLogModel: Model<PumpLogDocument>,
+  ) {}
+
+  async getTelemetryTrend(dto: GetTelemetryTrendDto) {
+    const { deviceId, startDate, endDate, resolution } = dto;
+
+    let dateFormat = '%Y-%m-%d';
+
+    if (resolution === TimeResolution.HOUR) {
+      dateFormat = '%Y-%m-%d %H:00';
+    }
+
+    if (resolution === TimeResolution.WEEK) {
+      dateFormat = '%Y-%U';
+    }
+
+    return this.sensorLogModel.aggregate([
+      {
+        $match: {
+          deviceId: deviceId,
+          timestamp: {
+            $gte: new Date(startDate),
+            $lte: new Date(endDate),
+          },
+        },
+      },
+
+      {
+        $group: {
+          _id: {
+            $dateToString: {
+              format: dateFormat,
+              date: '$timestamp',
+              timezone: '+07:00',
+            },
+          },
+
+          avgTemperature: {
+            $avg: '$data.temperature',
+          },
+
+          avgSoilMoisture: {
+            $avg: '$data.soilMoisture',
+          },
+
+          avgHumidity: {
+            $avg: '$data.humidity',
+          },
+
+          dataPoints: {
+            $sum: 1,
+          },
+        },
+      },
+
+      {
+        $sort: {
+          _id: 1,
+        },
+      },
+    ]);
+  }
+
+  async getPumpStats(dto: GetPumpStatsDto) {
+    const { deviceId, startDate, endDate } = dto;
+
+    return this.pumpLogModel.aggregate([
+      {
+        $match: {
+          deviceId: deviceId,
+          timestamp: {
+            $gte: new Date(startDate),
+            $lte: new Date(endDate),
+          },
+        },
+      },
+
+      {
+        $group: {
+          _id: null,
+
+          totalActivations: {
+            $sum: 1,
+          },
+
+          totalDurationMs: {
+            $sum: '$durationMs',
+          },
+        },
+      },
+    ]);
+  }
+  async getLatestTelemetry(deviceId: string) {
+    const latestLog = await this.sensorLogModel
+      .findOne({ deviceId })
+      .sort({ timestamp: -1 }) 
+      .exec();
+
+    if (!latestLog) {
+      return { 
+        success: false, 
+        message: 'No data for this device', 
+        data: null 
+      };
+    }
+
+    return {
+      success: true,
+      deviceId: latestLog.deviceId,
+      timestamp: latestLog.timestamp,
+      readings: latestLog.data 
+    };
+  }
+
+
+
+  //delete after test!!!
+  async seedFakeData(deviceId: string) {
+    await this.sensorLogModel.deleteMany({ deviceId });
+    await this.pumpLogModel.deleteMany({ deviceId });
+
+    const sensorLogs: any[] = [];
+    const pumpLogs: any[] = [];
+
+    const now = new Date();
+
+    for (let day = 30; day >= 0; day--) {
+      for (let hour = 0; hour < 24; hour++) {
+        const timestamp = new Date(
+          now.getTime() - day * 24 * 60 * 60 * 1000,
+        );
+
+        timestamp.setHours(hour, 0, 0, 0);
+
+        sensorLogs.push({
+          deviceId,
+          mac: '00:1B:44:11:3A:B7',
+
+          data: {
+            temperature: 25 + Math.random() * 10,
+            humidity: 50 + Math.random() * 30,
+            soilMoisture: 30 + Math.random() * 50,
+          },
+
+          timestamp,
+        });
+
+        if (Math.random() > 0.8) {
+          pumpLogs.push({
+            deviceId,
+            mac: '00:1B:44:11:3A:B7',
+
+            durationMs: 5000 + Math.floor(Math.random() * 10000),
+
+            source: 'ENV',
+
+            timestamp: new Date(
+              timestamp.getTime() + Math.random() * 3600000,
+            ),
+          });
+        }
+      }
+    }
+
+    await this.sensorLogModel.insertMany(sensorLogs);
+    await this.pumpLogModel.insertMany(pumpLogs);
+
+    return {
+      message: 'Fake data generated successfully',
+      sensorRecords: sensorLogs.length,
+      pumpRecords: pumpLogs.length,
+    };
+  }
+}
