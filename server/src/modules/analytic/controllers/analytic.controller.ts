@@ -20,6 +20,12 @@ export class AnalyticController {
     return result.length > 0 ? result[0] : { totalActivations: 0, totalDurationMs: 0 };
   }
 
+  // API: GET /analytic/telemetry/history?deviceId=...
+  @Get('telemetry/history')
+  async getTelemetryHistory(@Query() dto: GetLatestTelemetryDto,  @Query('limit') limit = 50,) {
+    return this.analyticService.getTelemetryHistory(dto.deviceId, limit);
+  }
+
   // API: GET /analytic/telemetry/latest?deviceId=...
   @Get('telemetry/latest')
   async getLatestTelemetry(@Query() dto: GetLatestTelemetryDto) {

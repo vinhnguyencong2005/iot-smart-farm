@@ -80,4 +80,13 @@ export class DeviceRepository {
 
     return device;
   }
+  async updatePumpLastTriggered(id: string, timestamp: Date): Promise<void> {
+    await this.deviceModel
+      .updateOne(
+        { _id: id },
+        { $set: { 'pumpConfig.lastTriggered': timestamp } }
+      )
+      .exec();
+    this.logger.log(`Updated lastTriggered timestamp for device ID: ${id}`);
+  }
 }

@@ -1,6 +1,6 @@
-import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
+import { Injectable, OnApplicationBootstrap, Logger } from '@nestjs/common';
 
-import { SensorType } from '../../device/enums/config.enums';
+import { SensorType, TriggerCondition } from '../../device/enums/config.enums'; // Thêm TriggerCondition vào đây
 import { GlobalStateService } from '../../global-state/services/global-state.service';
 import { InitializerRepository } from '../repositories/initializer.repository';
 
@@ -24,7 +24,7 @@ export class InitializerService implements OnApplicationBootstrap {
     // 1. Sync Indexes
     await this.initializerRepo.syncDatabaseIndexes();
 
-    // 2. Define Demo Data
+    // 2. Define Demo Data (Đã nâng cấp cấu trúc pumpConfig)
     const demoDevices: DemoDeviceData[] = [
       {
         name: 'Tomato Greenhouse',
@@ -33,9 +33,19 @@ export class InitializerService implements OnApplicationBootstrap {
           [SensorType.SOIL_MOISTURE]: { minThreshold: 30, maxThreshold: 80 },
           [SensorType.TEMPERATURE]: { minThreshold: 15, maxThreshold: 35 },
           [SensorType.HUMIDITY]: { minThreshold: 40, maxThreshold: 90 },
-          [SensorType.LIGHT_LEVEL]: { minThreshold: 1000, maxThreshold: 5000 },
+          [SensorType.LIGHT_LEVEL]: { minThreshold: 1000, maxThreshold: 5000 }, // Hãy đảm bảo thuộc tính này khớp với SensorType enum
         },
-        pumpConfig: { cooldownMs: 60000, defaultRunTimeMs: 5000 },
+        pumpConfig: {
+          enabled: true, 
+          trigger: {
+            type: 'soil_moisture',
+            condition: TriggerCondition.LESS_THAN,
+            value: 40, 
+          },
+          cooldownMs: 60000,
+          defaultRunTimeMs: 5000,
+          lastTriggered: null, 
+        },
       },
       {
         name: 'Balcony Succulents',
@@ -43,7 +53,17 @@ export class InitializerService implements OnApplicationBootstrap {
         sensorConfigs: {
           [SensorType.SOIL_MOISTURE]: { minThreshold: 10, maxThreshold: 50 },
         },
-        pumpConfig: { cooldownMs: 120000, defaultRunTimeMs: 3000 },
+        pumpConfig: {
+          enabled: true, 
+          trigger: {
+            type: 'soil_moisture',
+            condition: TriggerCondition.LESS_THAN,
+            value: 20, 
+          },
+          cooldownMs: 120000,
+          defaultRunTimeMs: 3000,
+          lastTriggered: null,
+        },
       },
     ];
 
@@ -53,7 +73,7 @@ export class InitializerService implements OnApplicationBootstrap {
 
     // 4. Only log and refresh if new data was added
     if (wasSeeded) {
-      this.logger.log('✅ Demo data successfully seeded into MongoDB!');
+      this.logger.log(' Demo data successfully seeded into MongoDB!');
       await this.globalState.refreshCache();
     }
   }

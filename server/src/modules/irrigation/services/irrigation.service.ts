@@ -4,7 +4,7 @@ import {
   ConflictException,
   NotFoundException,
 } from '@nestjs/common';
-import { EventEmitter2 } from '@nestjs/event-emitter';
+import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 
 import { GlobalStateService } from '../../global-state/services/global-state.service';
 import { DeviceRepository } from '../../device/repositories/device.repository';
@@ -14,18 +14,20 @@ import { IrrigationCommandDispatchEvent } from '../events/irrigation.event';
 export class IrrigationService {
   private readonly logger = new Logger(IrrigationService.name);
 
-  // RAM cache to prevent drowning the plants (Device ID -> Timestamp of last watering)
-  private lastWateredMap = new Map<string, number>();
-
   constructor(
     private readonly globalState: GlobalStateService,
     private readonly deviceRepository: DeviceRepository,
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
-  async triggerPump(deviceId: string) {
-    // 1. Fetch pump config from the fast RAM cache
-    const pumpConfig = this.globalState.getPumpConfigs(deviceId);
+  async triggerPump(deviceId: string, isManual = true) {
+    const device = await this.deviceRepository.findById(deviceId);
+
+    if (!device) {
+      throw new NotFoundException('Device not found in database');
+    }
+
+    const pumpConfig = device.pumpConfig;
 
     if (!pumpConfig) {
       throw new NotFoundException(
@@ -33,49 +35,66 @@ export class IrrigationService {
       );
     }
 
-    // 2. Enforce the Cooldown Rule
-    const now = Date.now();
-    const lastWatered = this.lastWateredMap.get(deviceId) || 0;
-    const timeSinceLastWatered = now - lastWatered;
+    const now = new Date();
 
-    if (timeSinceLastWatered < pumpConfig.cooldownMs) {
-      const remainingSeconds = Math.ceil(
-        (pumpConfig.cooldownMs - timeSinceLastWatered) / 1000,
-      );
-      this.logger.warn(
-        `Device ${deviceId} pump trigger rejected: On cooldown for ${remainingSeconds}s`,
-      );
+    if (pumpConfig.lastTriggered) {
+      const lastWateredTime = new Date(pumpConfig.lastTriggered).getTime();
+      const timeSinceLastWatered = now.getTime() - lastWateredTime;
 
-      // Throwing an HTTP 409 Conflict tells the React frontend to show an error toast
-      throw new ConflictException(
-        `Pump is on cooldown. Please wait ${remainingSeconds} seconds.`,
-      );
+      if (timeSinceLastWatered < pumpConfig.cooldownMs) {
+        const remainingSeconds = Math.ceil(
+          (pumpConfig.cooldownMs - timeSinceLastWatered) / 1000,
+        );
+
+        this.logger.warn(
+          `Device ${deviceId} pump trigger rejected: On database cooldown for ${remainingSeconds}s`,
+        );
+
+        throw new ConflictException(
+          `Pump is on cooldown. Please wait ${remainingSeconds} seconds.`,
+        );
+      }
     }
 
-    // 3. Lookup the MAC address for the MQTT payload
-    const device = await this.deviceRepository.findById(deviceId);
-    if (!device) {
-      throw new NotFoundException('Device not found in database');
-    }
+    await this.deviceRepository.updatePumpLastTriggered(deviceId, now);
 
-    // 4. Update the cooldown timer
-    this.lastWateredMap.set(deviceId, now);
-
+    const triggerType = isManual ? 'Manual' : 'Automation';
     this.logger.log(
-      `Manual pump trigger approved for Device ${deviceId} (${pumpConfig.defaultRunTimeMs}ms)`,
+      `[${triggerType}] Pump trigger approved for Device ${device.name} (${deviceId}) [${pumpConfig.defaultRunTimeMs}ms]`,
     );
 
-    // 5. Dispatch the command to the MQTT Client Module
     const dispatchEvent = new IrrigationCommandDispatchEvent(
       device.macAddress,
       pumpConfig.defaultRunTimeMs,
     );
+
     this.eventEmitter.emit('irrigation.command.dispatch', dispatchEvent);
 
     return {
       message: 'Pump triggered successfully',
+      triggerType, 
       durationMs: pumpConfig.defaultRunTimeMs,
       cooldownMs: pumpConfig.cooldownMs,
+      lastTriggered: now,
     };
+  }
+
+  @OnEvent('irrigation.automation.trigger', { async: true })
+  async handleAutomationTrigger(payload: { deviceId: string; deviceName: string }) {
+    try {
+      this.logger.log(
+        `[AUTO-ENGINE] Nhận tín hiệu kích hoạt tự động cho thiết bị: ${payload.deviceName}`,
+      );
+
+      await this.triggerPump(payload.deviceId, false);
+
+      this.logger.log(
+        `[AUTO-ENGINE] Đã thực thi lệnh bật bơm tự động thành công cho ${payload.deviceName}`,
+      );
+    } catch (error: any) {
+      this.logger.warn(
+        `[AUTO-ENGINE] Bơm tự động bị hủy lệnh bảo vệ. Lý do: ${error.message}`,
+      );
+    }
   }
 }

@@ -81,9 +81,15 @@ export class GlobalStateService implements OnModuleInit {
   }
 
   @OnEvent('device.pumpConfigUpdated')
-  handlePumpConfigUpdate(payload: UpdatePumpConfigEvent) {
-    const id = payload.deviceId;
-    this.devicePumpsMap.set(id, payload.configData);
-    this.logger.log(`RAM Cache Updated: Pump config for Device ${id}`);
+  handlePumpConfigUpdated(payload: any) { 
+    const { id, configData } = payload;
+    
+    const currentPump = this.devicePumpsMap.get(id);
+
+    this.devicePumpsMap.set(id, {
+      ...currentPump,             
+      ...configData,              
+      lastTriggered: currentPump?.lastTriggered ?? null 
+    });
   }
 }

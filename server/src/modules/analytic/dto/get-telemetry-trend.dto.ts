@@ -9,7 +9,7 @@ export enum TimeResolution {
 
 export class GetTelemetryTrendDto {
   @ApiProperty({
-    description: 'Device ID (e.g. 11:22:33:44:55:66)',
+    description: 'Device ID (e.g. 6a142ad42989def1d84e0aa3)',
   })
   @IsNotEmpty()
   @IsString()

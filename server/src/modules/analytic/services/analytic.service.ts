@@ -2,19 +2,42 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 
-import { SensorLog, SensorLogDocument } from '../../monitor/schemas/sensor-log.schema';
-import { PumpLog, PumpLogDocument } from '../../monitor/schemas/pump-log.schema';
-import { GetTelemetryTrendDto, TimeResolution } from '../dto/get-telemetry-trend.dto';
-import { GetPumpStatsDto } from '../dto/get-pump-stats.dto'; 
+import {
+  SensorLog,
+  SensorLogDocument,
+} from '../../monitor/schemas/sensor-log.schema';
 
+import {
+  PumpLog,
+  PumpLogDocument,
+} from '../../monitor/schemas/pump-log.schema';
+
+import {
+  GetTelemetryTrendDto,
+  TimeResolution,
+} from '../dto/get-telemetry-trend.dto';
+
+import { GetPumpStatsDto } from '../dto/get-pump-stats.dto';
+
+@Injectable()
 export class AnalyticService {
   constructor(
-    @InjectModel(SensorLog.name) private sensorLogModel: Model<SensorLogDocument>,
-    @InjectModel(PumpLog.name) private pumpLogModel: Model<PumpLogDocument>,
+    @InjectModel(SensorLog.name)
+    private sensorLogModel: Model<SensorLogDocument>,
+
+    @InjectModel(PumpLog.name)
+    private pumpLogModel: Model<PumpLogDocument>,
   ) {}
 
-  async getTelemetryTrend(dto: GetTelemetryTrendDto) {
-    const { deviceId, startDate, endDate, resolution } = dto;
+  async getTelemetryTrend(
+    dto: GetTelemetryTrendDto,
+  ) {
+    const {
+      deviceId,
+      startDate,
+      endDate,
+      resolution,
+    } = dto;
 
     let dateFormat = '%Y-%m-%d';
 
@@ -29,7 +52,7 @@ export class AnalyticService {
     return this.sensorLogModel.aggregate([
       {
         $match: {
-          deviceId: deviceId,
+          deviceId,
           timestamp: {
             $gte: new Date(startDate),
             $lte: new Date(endDate),
@@ -48,15 +71,19 @@ export class AnalyticService {
           },
 
           avgTemperature: {
-            $avg: '$data.temperature',
+            $avg: '$data.temp',
           },
 
           avgSoilMoisture: {
-            $avg: '$data.soilMoisture',
+            $avg: '$data.soil',
           },
 
           avgHumidity: {
-            $avg: '$data.humidity',
+            $avg: '$data.humid',
+          },
+
+          avgLight: {
+            $avg: '$data.light',
           },
 
           dataPoints: {
@@ -74,12 +101,16 @@ export class AnalyticService {
   }
 
   async getPumpStats(dto: GetPumpStatsDto) {
-    const { deviceId, startDate, endDate } = dto;
+    const {
+      deviceId,
+      startDate,
+      endDate,
+    } = dto;
 
     return this.pumpLogModel.aggregate([
       {
         $match: {
-          deviceId: deviceId,
+          deviceId,
           timestamp: {
             $gte: new Date(startDate),
             $lte: new Date(endDate),
@@ -102,34 +133,80 @@ export class AnalyticService {
       },
     ]);
   }
+
   async getLatestTelemetry(deviceId: string) {
     const latestLog = await this.sensorLogModel
       .findOne({ deviceId })
-      .sort({ timestamp: -1 }) 
+      .sort({ timestamp: -1 })
+      .lean()
       .exec();
 
     if (!latestLog) {
-      return { 
-        success: false, 
-        message: 'No data for this device', 
-        data: null 
+      return {
+        success: false,
+        message: 'No data for this device',
+        data: null,
       };
     }
 
     return {
       success: true,
+
       deviceId: latestLog.deviceId,
+
       timestamp: latestLog.timestamp,
-      readings: latestLog.data 
+
+      readings: {
+        soilMoisture: latestLog.data.soil,
+        temperature: latestLog.data.temp,
+        humidity: latestLog.data.humid,
+        light: latestLog.data.light,
+      },
     };
   }
 
+  async getTelemetryHistory(
+    deviceId: string,
+    limit = 50,
+  ) {
+    const parsedLimit = Math.min(
+      Number(limit) || 50,
+      200,
+    );
 
+    const logs = await this.sensorLogModel
+      .find({ deviceId })
+      .sort({ timestamp: -1 })
+      .limit(parsedLimit)
+      .lean()
+      .exec();
 
-  //delete after test!!!
+    return logs.map((log) => ({
+      id: log._id,
+
+      deviceId: log.deviceId,
+
+      mac: log.mac,
+
+      timestamp: log.timestamp,
+
+      readings: {
+        soilMoisture: log.data.soil,
+        temperature: log.data.temp,
+        humidity: log.data.humid,
+        light: log.data.light,
+      },
+    }));
+  }
+
   async seedFakeData(deviceId: string) {
-    await this.sensorLogModel.deleteMany({ deviceId });
-    await this.pumpLogModel.deleteMany({ deviceId });
+    await this.sensorLogModel.deleteMany({
+      deviceId,
+    });
+
+    await this.pumpLogModel.deleteMany({
+      deviceId,
+    });
 
     const sensorLogs: any[] = [];
     const pumpLogs: any[] = [];
@@ -139,19 +216,22 @@ export class AnalyticService {
     for (let day = 30; day >= 0; day--) {
       for (let hour = 0; hour < 24; hour++) {
         const timestamp = new Date(
-          now.getTime() - day * 24 * 60 * 60 * 1000,
+          now.getTime() -
+            day * 24 * 60 * 60 * 1000,
         );
 
         timestamp.setHours(hour, 0, 0, 0);
 
         sensorLogs.push({
           deviceId,
+
           mac: '00:1B:44:11:3A:B7',
 
           data: {
-            temperature: 25 + Math.random() * 10,
-            humidity: 50 + Math.random() * 30,
-            soilMoisture: 30 + Math.random() * 50,
+            soil: 30 + Math.random() * 50,
+            temp: 25 + Math.random() * 10,
+            humid: 50 + Math.random() * 30,
+            light: 1000 + Math.random() * 1000,
           },
 
           timestamp,
@@ -160,26 +240,40 @@ export class AnalyticService {
         if (Math.random() > 0.8) {
           pumpLogs.push({
             deviceId,
+
             mac: '00:1B:44:11:3A:B7',
 
-            durationMs: 5000 + Math.floor(Math.random() * 10000),
+            durationMs:
+              5000 +
+              Math.floor(
+                Math.random() * 10000,
+              ),
 
             source: 'ENV',
 
             timestamp: new Date(
-              timestamp.getTime() + Math.random() * 3600000,
+              timestamp.getTime() +
+                Math.random() * 3600000,
             ),
           });
         }
       }
     }
 
-    await this.sensorLogModel.insertMany(sensorLogs);
-    await this.pumpLogModel.insertMany(pumpLogs);
+    await this.sensorLogModel.insertMany(
+      sensorLogs,
+    );
+
+    await this.pumpLogModel.insertMany(
+      pumpLogs,
+    );
 
     return {
-      message: 'Fake data generated successfully',
+      message:
+        'Fake data generated successfully',
+
       sensorRecords: sensorLogs.length,
+
       pumpRecords: pumpLogs.length,
     };
   }
