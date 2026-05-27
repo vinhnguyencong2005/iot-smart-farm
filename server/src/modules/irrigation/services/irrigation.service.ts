@@ -58,7 +58,7 @@ export class IrrigationService {
 
     await this.deviceRepository.updatePumpLastTriggered(deviceId, now);
 
-    const triggerType = isManual ? 'Manual' : 'Automation';
+    const triggerType = isManual ? 'MANUAL' : 'ENV';
     this.logger.log(
       `[${triggerType}] Pump trigger approved for Device ${device.name} (${deviceId}) [${pumpConfig.defaultRunTimeMs}ms]`,
     );
@@ -66,6 +66,7 @@ export class IrrigationService {
     const dispatchEvent = new IrrigationCommandDispatchEvent(
       device.macAddress,
       pumpConfig.defaultRunTimeMs,
+      isManual ? 'MANUAL' : 'ENV',
     );
 
     this.eventEmitter.emit('irrigation.command.dispatch', dispatchEvent);

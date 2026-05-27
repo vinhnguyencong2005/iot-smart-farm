@@ -25,8 +25,8 @@ export class PumpConfig {
   @Prop({ type: Boolean, default: true })
   enabled: boolean = true;
 
-  @Prop({ type: PumpTriggerSchema, default: () => ({}) })
-  trigger!: PumpTrigger;
+  @Prop({ type: [PumpTriggerSchema], default: () => [] })
+  trigger!: PumpTrigger[];
 
   @Prop({ type: Number, default: 5000 })
   defaultRunTimeMs: number = 5000;

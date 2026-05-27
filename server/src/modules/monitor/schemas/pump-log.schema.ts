@@ -14,7 +14,7 @@ export class PumpLog {
   @Prop({ type: Number, required: true })
   durationMs!: number;
 
-  @Prop({ type: String, enum: ['MANUAL', 'ENV', 'SCHEDULE'], required: true })
+  @Prop({ type: String, enum: ['MANUAL', 'ENV'], required: true })
   source!: string; 
 
   @Prop({ type: Date, required: true, default: Date.now, index: true })

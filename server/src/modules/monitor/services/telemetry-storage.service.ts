@@ -45,7 +45,7 @@ export class TelemetryStorageService {
         return;
       }
 
-      const triggerSource = payload.source || 'AUTOMATION'; 
+      const triggerSource = payload.source || 'ENV'; 
 
       await this.pumpLogModel.create({
         deviceId: deviceId,
