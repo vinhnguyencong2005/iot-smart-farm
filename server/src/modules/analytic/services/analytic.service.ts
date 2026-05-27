@@ -100,14 +100,10 @@ export class AnalyticService {
     ]);
   }
 
-  async getPumpStats(dto: GetPumpStatsDto) {
-    const {
-      deviceId,
-      startDate,
-      endDate,
-    } = dto;
+  async calculatePumpStats(dto: GetPumpStatsDto) {
+    const { deviceId, startDate, endDate } = dto;
 
-    return this.pumpLogModel.aggregate([
+    const stats = await this.pumpLogModel.aggregate([
       {
         $match: {
           deviceId,
@@ -117,21 +113,57 @@ export class AnalyticService {
           },
         },
       },
-
       {
         $group: {
           _id: null,
-
-          totalActivations: {
-            $sum: 1,
-          },
-
-          totalDurationMs: {
-            $sum: '$durationMs',
-          },
+          totalActivations: { $sum: 1 },
+          totalDurationMs: { $sum: '$durationMs' },
         },
       },
     ]);
+
+    return stats.length > 0 ? stats[0] : { totalActivations: 0, totalDurationMs: 0 };
+  }
+
+  async getPumpLogsWithPagination(dto: GetPumpStatsDto) {
+    const { deviceId, startDate, endDate, page = 1, limit = 20 } = dto;
+    const skip = (page - 1) * limit;
+
+    const queryFilter: any = {
+      deviceId,
+      timestamp: {
+        $gte: new Date(startDate),
+        $lte: new Date(endDate),
+      },
+    };
+
+    const logs = await this.pumpLogModel
+      .find(queryFilter)
+      .sort({ timestamp: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean()
+      .exec();
+
+    const total = await this.pumpLogModel.countDocuments(queryFilter);
+
+    return {
+      success: true,
+      data: logs.map((log) => ({
+        id: log._id,
+        deviceId: log.deviceId,
+        mac: log.mac,
+        durationMs: log.durationMs,
+        source: log.source,
+        timestamp: log.timestamp,
+      })),
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 
   async getLatestTelemetry(deviceId: string) {
@@ -165,38 +197,49 @@ export class AnalyticService {
     };
   }
 
-  async getTelemetryHistory(
-    deviceId: string,
-    limit = 50,
-  ) {
-    const parsedLimit = Math.min(
-      Number(limit) || 50,
-      200,
-    );
+async getTelemetryHistory(dto: GetPumpStatsDto) {
+    const { deviceId, startDate, endDate, page = 1, limit = 50 } = dto;
+    const skip = (page - 1) * limit;
+
+    const queryFilter: any = {
+      deviceId,
+      timestamp: {
+        $gte: new Date(startDate),
+        $lte: new Date(endDate),
+      },
+    };
 
     const logs = await this.sensorLogModel
-      .find({ deviceId })
-      .sort({ timestamp: -1 })
-      .limit(parsedLimit)
+      .find(queryFilter)
+      .sort({ timestamp: -1 }) 
+      .skip(skip)
+      .limit(limit)
       .lean()
       .exec();
 
-    return logs.map((log) => ({
-      id: log._id,
+    const total = await this.sensorLogModel.countDocuments(queryFilter);
 
-      deviceId: log.deviceId,
-
-      mac: log.mac,
-
-      timestamp: log.timestamp,
-
-      readings: {
-        soilMoisture: log.data.soil,
-        temperature: log.data.temp,
-        humidity: log.data.humid,
-        light: log.data.light,
+    return {
+      success: true,
+      data: logs.map((log) => ({
+        id: log._id,
+        deviceId: log.deviceId,
+        mac: log.mac,
+        timestamp: log.timestamp,
+        readings: {
+          soilMoisture: log.data?.soil ?? null,
+          temperature: log.data?.temp ?? null,
+          humidity: log.data?.humid ?? null,
+          light: log.data?.light ?? null,
+        },
+      })),
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
       },
-    }));
+    };
   }
 
   async seedFakeData(deviceId: string) {

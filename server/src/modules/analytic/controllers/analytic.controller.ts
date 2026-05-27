@@ -16,14 +16,20 @@ export class AnalyticController {
   // API: GET /analytic/irrigation/usage?deviceId=...&startDate=...&endDate=...
   @Get('irrigation/usage')
   async getPumpStats(@Query() dto: GetPumpStatsDto) {
-    const result = await this.analyticService.getPumpStats(dto);
+    const result = await this.analyticService.calculatePumpStats(dto);
     return result.length > 0 ? result[0] : { totalActivations: 0, totalDurationMs: 0 };
   }
 
-  // API: GET /analytic/telemetry/history?deviceId=...
+  // API: GET /analytic/irrigation-history?deviceId=...&startDate=...&endDate=...&page=1&limit=20
+  @Get('irrigation-history')
+  async getPumpHistory(@Query() dto: GetPumpStatsDto) {
+    return this.analyticService.getPumpLogsWithPagination(dto);
+  }
+
+  // API: GET /analytic/telemetry/history?deviceId=...&startDate=...&endDate=...&page=1&limit=50
   @Get('telemetry/history')
-  async getTelemetryHistory(@Query() dto: GetLatestTelemetryDto,  @Query('limit') limit = 50,) {
-    return this.analyticService.getTelemetryHistory(dto.deviceId, limit);
+  async getTelemetryHistory(@Query() dto: GetPumpStatsDto) {
+    return this.analyticService.getTelemetryHistory(dto);
   }
 
   // API: GET /analytic/telemetry/latest?deviceId=...

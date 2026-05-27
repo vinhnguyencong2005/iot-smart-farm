@@ -1,5 +1,6 @@
-import { IsNotEmpty, IsString, IsDateString } from 'class-validator';
+import { IsNotEmpty, IsString, IsDateString, IsOptional, IsInt, Min, Max } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 
 export class GetPumpStatsDto {
   @ApiProperty({
@@ -24,4 +25,29 @@ export class GetPumpStatsDto {
   @IsNotEmpty()
   @IsDateString()
   endDate!: string;
+
+  @ApiProperty({
+    description: 'Current page number for pagination',
+    example: 1,
+    required: false,
+    default: 1,
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page: number = 1;
+
+  @ApiProperty({
+    description: 'Number of records per page for pagination',
+    example: 20,
+    required: false,
+    default: 20,
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  limit: number = 20;
 }
